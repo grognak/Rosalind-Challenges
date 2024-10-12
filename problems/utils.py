@@ -1,22 +1,22 @@
 def parse_fasta_file(lines):
     '''
-    Parses a FASTA file and returns a dictionary of sequences.
+    Parses a FASTA file and returns a list of id-sequence tuples.
     
     The FASTA id is the key in the sequence dictionary and the dna string is the value.
     The lines are assumed to be stripped of any new line characters.
     '''
-    sequences = {}
+    sequences = []
     temp_sequence = ""
     temp_id = ""
     for l in lines:
         if l[0] == ">":
             if temp_sequence != "":
-                sequences[temp_id] = temp_sequence
+                sequences.append((temp_id, temp_sequence))
                 temp_sequence = ""
             temp_id = l[1:]
         else:
             temp_sequence += l
-    sequences[temp_id] = temp_sequence #last sequence in the file
+    sequences.append((temp_id, temp_sequence)) #last sequence in the file
     return sequences
 
 def parse_fasta(fasta_data):

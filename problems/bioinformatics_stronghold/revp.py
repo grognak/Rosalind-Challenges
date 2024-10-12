@@ -11,52 +11,40 @@ Given: A DNA string of length at most 1 kbp in FASTA format.
 Return: The position and length of every reverse palindrome in the string having length 
 between 4 and 12. You may return these pairs in any order.
 '''
-import sys
-import os
 
-# Add the parent directory to the system path
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
+fasta_formatted_string = '>Rosalind_5704CGCGGTTCAGACCACTGCGATACGTGGGACGAATCCCGGACGGCTGTTAAATGTGGGGTGCTGACCTCATATTCGCAGATGCGTGCAAAATGGCCCTAGCGATCCGCACAGAGGCATCCCGCCAGGAATCTGATGCGGCGCGTCATTCACCCTGAGACTGCGGCCCTCTGGCGGGAAGGTTCCTTCACAGCCAATTCTTGGCGAATCACTCGCACCAACGCACTTTATTGACGCAAAAGGAACATCAATTTGCGTCCCTCCTCAGCGTATGTTTGTGGCGGCCGAGTGCCGTTCCAACTGCCGCGACCAAGAACTTACGTTTCTACTAGGCAATGTATGAACCCTTGAACCACGAATACATCCGTAATACGATCGTATCACACGGCAGCTCACAATACACCGGCCTGTATCAACGAACCAAACACGGTTGGAATTCCAAAAGAAAAAATAGATTATTATTTTTAGACGGTTCAGTAAAACGAAGAGTAGTACACGAGGCAGTCCTGCAGGAGAAGCTCTTGAAGGAGCATTAATGGGAAGAGGTGCCGCGAGATCGACTGCAAGAATTTCGCTGCCCCCGCCATATTGGTGCGCGTGAATTGAGTACTCATGGGCTTCGCACTGAGAGAGAAACTTGGTGAAAGCATTGAAGAGATTAATCGTTGAATTAACACCTAGGAGATCTTCCAGAGTGTCGTGAACACGCGCATGTGTTCCGGTCGACAAATTCCTGGAGCTGGACGTCGTGGACCCCGCAGTCATTCGATTTCGGTGGAGACACGCCTGAAGCGCGGCCTCGTTTATCCGTTAGAACTAAGCCCTGCTGCACTACTTTACCCAGTGTTTTGCACTATTGCTCTTTTATA'
 
-import utils
-'''
-def revp(fasta):
-    for start in range(len(fasta[1])):
-        for length in range(4,13):
-            chunk = fasta[1][start:start+length]
-            if len(chunk) >= 4 and chunk == utils.reverse_complement(chunk):
-                yield (start + 1, length)
-'''
+dna_id = fasta_formatted_string[0 : 14]
+dna_seq = fasta_formatted_string[14 :]
 
-from Bio import SeqIO
+#Function below is inspired from the REVC-Complementing-a-Strand-of-DNA.py file
+def is_reverse_palindrome(sequence):
 
-def switch(s):
-    s = s[::-1]
-    # print s
-    switch_s = ''
-    for i in range(len(s)):
-        if s[i] == 'A':
-            switch_s += 'T'
-        elif s[i] == 'T':
-            switch_s += 'A'
-        elif s[i] == 'G':
-            switch_s += 'C'
-        elif s[i] == 'C':
-            switch_s += 'G'
-    return switch_s
+    #Take the reverse
+    reversed_string = sequence[::-1]
 
-def palindrome(s):
-    for i in range(len(s)):
-        for j in range(4,13,1):
-            if s[i:i+j] == switch(s[i:i+j]) and (i+j <= len(s)):
-                print(i+1, j)
+    #Create a dictionary
+    complement_dict = {'A':'T','T':'A','G':'C','C':'G'}
 
-if __name__ == "__main__":
-    # load data
-    seq_name, seq_string = [], []
-    with open ("../../inputs/bioinformatics_stronghold/rosalind_revp.txt",'r') as fa:
-        for seq_record  in SeqIO.parse(fa,'fasta'):
-            seq_name.append(str(seq_record.name))
-            seq_string.append(str(seq_record.seq))
-    s = seq_string[0]
-    palindrome(s)
+    #Take the compelement of the reverse
+    complement_reversed_string = ""
+    for base in reversed_string:
+        complement_reversed_string += complement_dict[base]
+    if complement_reversed_string == sequence:
+        return True
+    return False
+
+length_of_dna = len(dna_seq)
+
+#We will divide the string into 4-base, 5-base ...., 12-base length respectively with the loop below
+for i in range(4, 13):
+    #We will get every consecutive i-base length part
+    #That is, if our string is AGAT and if we want all consecutive 2-base length parts
+    #We will have AG,GA,AT
+    #Loop below does exactly the same
+    for j in range(length_of_dna - i + 1):
+
+        part = dna_seq[j : j + i]
+        if is_reverse_palindrome(part):
+            #Position is incremented by one since question assumes first index is 1 not 0
+            print(j + 1, i)
