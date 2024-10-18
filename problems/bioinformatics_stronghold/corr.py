@@ -1,69 +1,50 @@
-'''
-ROSALIND Error Correction in Reads (CORR)
+# ^_^ coding:utf-8 ^_^
 
-Problem
-As is the case with point mutations, the most common type of sequencing error occurs when 
-a single nucleotide from a read is interpreted incorrectly.
+""" 
+Error Correction in Reads
+url: http://rosalind.info/problems/corr/
 
-Given: A collection of up to 1000 reads of equal length (at most 50 bp) in FASTA format.
-Some of these reads were generated with a single-nucleotide error. For each read s in 
-the dataset, one of the following applies:
+Given: A collection of up to 1000 reads of equal length (at most 50 bp) in FASTA format. Some of these reads were generated with a single-nucleotide error. For each read s in the dataset, one of the following applies: s was correctly sequenced and appears in the dataset at least twice (possibly as a reverse complement); s is incorrect, it appears in the dataset exactly once, and its Hamming distance is 1 with respect to exactly one correct read in the dataset (or its reverse complement).
+Return: A list of all corrections in the form "[old read]->[new read]". (Each correction must be a single symbol substitution, and you may return the corrections in any order.)
+"""
 
-1)  s was correctly sequenced and appears in the dataset at least twice (possibly as a 
- reverse complement);
-2)  s is incorrect, it appears in the dataset exactly once, and its Hamming distance is 
-1 with respect to exactly one correct read in the dataset (or its reverse complement).
+from Bio import SeqIO
 
-Return: A list of all corrections in the form "[old read]->[new read]". (Each correction
-must be a single symbol substitution, and you may return the corrections in any order.)
-'''
+def hamming_distance(s1, s2):
+    return sum([1 if s1[i]!=s2[i] else 0 for i in range(len(s1))])
 
-print("ROSALIND Error Correction in Reads (CORR)")
-f = open("../../inputs/bioinformatics_stronghold/rosalind_corr.txt", "r")
-l=[]
-l1=[]
-q=[]
-correct=[]
+def error_correct(reads):
+    corrections = []
+    correct_reads, incorrect_reads = [], []
+    reverse_pattern={"A": "T", "T": "A", "C": "G", "G": "C"}
 
-def point_mut_count(original, mutation):
-  count = 0
-  for i in range(len(original)):
-    if mutation[i] != original[i]:
-      count +=1
-  return count
+    for r in reads:
+        reverse_r = "".join([reverse_pattern[i] for i in r[::-1]])
+        if reads.count(r) + reads.count(reverse_r) >= 2:
+            correct_reads.append(r)
+        else:
+            incorrect_reads.append(r)
 
-def complement(text):
-  new_text= ""
-  for i in text:
-    if i == "A":
-      new_text+="T"
-    elif i == "C":
-      new_text+="G"
-    elif i == "G":
-      new_text+="C"
-    else:
-      new_text+="A"
-  return new_text[::-1]
-for i in f.readlines():
-    if not i.startswith(">"):
-        l.append(str(i.replace("\n", "")))
-for i in l:
-    if l.count(i)>1:
-        correct.append(i)
-    elif complement(i) in l:
-        correct.append(i)
-    else:
-        q.append(i)
-for i in q:
-    c=0
-    for j in correct:
-        if point_mut_count(i, j)==1:
-            if c==0:
-                c=1
-                l1.append(str(i)+"->"+str(j))
-        elif point_mut_count(i, complement(j))==1:
-            if c==0:
-                c=1
-                l1.append(str(i)+"->"+str(complement(j)))
-for i in l1:
-    print(i)
+    for ir in incorrect_reads:
+        for cr in correct_reads:
+            reverse_cr = "".join([reverse_pattern[i] for i in cr[::-1]])
+            if hamming_distance(ir, cr) == 1:
+                corrections.append((ir, cr))
+                break
+            if hamming_distance(ir, reverse_cr) == 1:
+                corrections.append((ir, reverse_cr))
+                break
+
+    return corrections
+
+if __name__ == "__main__":
+    # load data
+    seq_name, seq_string = [], []
+    with open ("../../inputs/bioinformatics_stronghold/rosalind_corr.txt",'r') as fa:
+        for seq_record in SeqIO.parse(fa,'fasta'):
+            seq_name.append(str(seq_record.name))
+            seq_string.append(str(seq_record.seq))
+    # print(seq_string)
+    corrections = error_correct(seq_string)
+    for ir, cr in corrections:
+        print("{}->{}".format(ir, cr))
